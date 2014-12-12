@@ -52,7 +52,6 @@ function tiling.cycle(direction)
   end
 
   windows[nextindex]:focus()
-  apply(windows, layout)
 end
 
 function tiling.cyclelayout()
