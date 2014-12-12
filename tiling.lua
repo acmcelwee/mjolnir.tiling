@@ -74,6 +74,59 @@ function tiling.promote()
   apply(windows, space.layout)
 end
 
+function tiling.resizevertical(direction, interval, limit)
+  direction = direction or 1
+  interval = interval or 5
+  limit = limit or 200
+  local space = getspace()
+  local windows = space.windows
+  local win = window:focusedwindow() or windows[1]
+  local wincount = #windows
+  local focused_frame = win:frame()
+  local primary_screen = screen.mainscreen()
+  local max_frame = primary_screen:frame()
+  local available_left_border = 0
+  local available_right_border = max_frame.w
+  local delta = direction * interval
+
+  -- TODO: Resizing the vertical quadrants of the main-horizontal layout will take some more time
+  if wincount == 1 then
+    return
+  end
+
+  -- Is this window aligned to the left side?
+  if focused_frame.x < 1 then
+    local targetright = math.max(limit, focused_frame.w + delta)
+    focused_frame.w = targetright
+
+    -- Just in case it's been shifted off the screen a bit
+    focused_frame.x = 0
+
+    available_left_border = targetright
+  -- Is this the right half that we're working with?
+  elseif (focused_frame.x + focused_frame.w) == max_frame.w then
+    local targetleft = math.min(math.max(limit, focused_frame.x + delta), max_frame.w)
+    focused_frame.x = targetleft
+    available_right_border = targetleft
+  end
+
+  if available_left_border > 0 or available_right_border < max_frame.w then
+    win:setframe(focused_frame)
+
+    for index, win in pairs(windows) do
+      if index ~= 1 then
+        local frame = win:frame()
+        local deltax = frame.x - available_left_border
+
+        frame.x = available_left_border
+        frame.w = available_right_border - frame.x
+
+        win:setframe(frame)
+      end
+    end
+  end
+end
+
 function apply(windows, layout)
   layouts[layout](windows)
 end
